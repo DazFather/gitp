@@ -74,7 +74,7 @@ func (t *tui[cSet]) Gitp(command string, args ...string) error {
 			{"checkout", "-b", args[0]},
 			{"push", "--set-upstream", "origin", args[0]},
 		})
-		if err != nil {
+		if err == nil {
 			t.branch = args[0]
 		}
 	case "checkout", "switch":
