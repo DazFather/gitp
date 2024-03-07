@@ -47,7 +47,7 @@ func (t theme[cSet]) printCursor(branch, location string) {
 func (t theme[cSet]) printError(err any) {
 	fmt.Printf("%s%s\n",
 		t.errDesc.Paint(" ERROR "),
-		t.err.Paint(" - ", err),
+		t.err.Paint(" - ", err, " "),
 	)
 }
 
@@ -94,14 +94,15 @@ func (t theme[cSet]) printHelp(output string) {
 	))
 }
 
-func ThemeWrapper[cSet brush.ColorType](t theme[cSet]) *tui[cSet] {
-	return &tui[cSet]{theme: t}
-}
-
 func (t tui[cSet]) Cursor() {
 	t.printCursor(t.branch, t.directory)
 }
 
 func (t tui[cSet]) ShowError(err any) {
 	t.printError(err)
+}
+
+func (t theme[cSet]) ShowNoArgsError() {
+	t.printError("No given arguments")
+	t.std.Println("Use 'gitp help' to learn more")
 }

@@ -18,23 +18,29 @@ type tui[cSet brush.ColorType] struct {
 	theme[cSet]
 }
 
-func NewTui[cSet brush.ColorType](t theme[cSet]) (term *tui[cSet]) {
+func NewTui[cSet brush.ColorType](t theme[cSet]) (term *tui[cSet], err error) {
 	term = &tui[cSet]{theme: t}
-	if err := term.refreshInfo(); err != nil {
-		t.printError(err)
-		return nil
+	if err = term.refreshInfo(); err != nil {
+		return nil, fmt.Errorf("Cannot create gitp+ terminal, %v", err)
 	}
 	return
 }
 
-func DefaultTui() *tui[brush.ANSIColor] {
-	return NewTui(defaultTheme)
+func DefaultTui() (term tui[brush.ANSIColor], err error) {
+	term = tui[brush.ANSIColor]{theme: defaultTheme}
+	if err = term.refreshInfo(); err != nil {
+		err = fmt.Errorf("Cannot create gitp+ terminal, %v", err)
+	}
+	return
 }
 
-func (t *tui[cSet]) Gitp(command string, args ...string) error {
+func (t *tui[cSet]) Gitp(command string, args ...string) (err error) {
 	switch command {
 	case "git":
-		return t.Gitp(args[0], args[1:]...)
+		if len(args) > 0 {
+			return t.Gitp(args[0], args[1:]...)
+		}
+		t.ShowNoArgsError()
 	case "-h", "--help", "help":
 		out, err := git(command, args...)
 		if err == nil {
@@ -65,10 +71,10 @@ func (t *tui[cSet]) Gitp(command string, args ...string) error {
 		return t.executeFlow(command, true, flow{{"fetch"}, {"pull"}})
 	case "fork":
 		if len(args) != 1 {
-			return errors.New("Invalid given argument, usage: fork <branch-name>")
+			return errors.New("Invalid given argument, usage: fork <new-branch-name>")
 		}
 
-		err := t.executeFlow(command, true, flow{
+		err = t.executeFlow(command, true, flow{
 			{"fetch"},
 			{"pull"},
 			{"checkout", "-b", args[0]},
@@ -82,14 +88,13 @@ func (t *tui[cSet]) Gitp(command string, args ...string) error {
 			return errors.New("Invalid given argument: missing branch name to switch to")
 		}
 
-		if err := t.execute(command, args...); err != nil {
-			return err
+		if err = t.execute(command, args...); err == nil {
+			t.branch = args[0]
 		}
-		t.branch = args[0]
 	default:
 		return t.execute(command, args...)
 	}
-	return nil
+	return
 }
 
 func (t tui[cSet]) InteractiveGitp(escapeSeq string) error {
