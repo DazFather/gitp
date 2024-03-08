@@ -12,16 +12,12 @@ func main() {
 
 	switch os.Args[1] {
 	case "terminal", "-terminal", "--terminal":
-		if err == nil {
-			err = term.InteractiveGitp("")
-		}
-	case "init", "clone", "-h", "--help", "help":
-		err = term.Gitp(os.Args[1], os.Args[2:]...)
+		err = term.InteractiveGitp("")
 	default:
 		if err == nil {
 			term.Cursor()
-			err = term.Gitp(os.Args[1], os.Args[2:]...)
 		}
+		err = term.Gitp(os.Args[1], os.Args[2:]...)
 	}
 
 	if err != nil {
