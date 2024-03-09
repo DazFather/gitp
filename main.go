@@ -1,6 +1,9 @@
 package main
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 func main() {
 	if len(os.Args) <= 1 {
@@ -14,7 +17,7 @@ func main() {
 	case "terminal", "-terminal", "--terminal":
 		err = term.InteractiveGitp("")
 	default:
-		term.Cursor("\n")
+		term.Cursor(strings.Join(os.Args[1:], " ") + "\n")
 		err = term.Gitp(os.Args[1], os.Args[2:]...)
 	}
 
