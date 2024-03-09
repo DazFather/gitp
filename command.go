@@ -5,22 +5,28 @@ import (
 	"strings"
 )
 
-func (t tui[xSet]) executeFlow(flowName string, stash bool, commands [][]string) error {
-	var err error
+func (t tui[cSet]) executeStash(fn func() error) error {
+	t.printCommand(t.branch, "status", "--p=v1")
 
-	t.printFlowStart(flowName)
-	if stash {
-		t.printCommand(t.branch, "status", "--p=v1")
-		out, err := git("status", "--p=v1")
-		t.printOut(out)
-		if stash = out != ""; stash {
-			err = t.execute("stash")
-		}
-		if err != nil {
-			return err
+	out, err := git("status", "--p=v1")
+	t.printOut(out)
+	if err != nil {
+		return err
+	}
+	if out == "" { // Nothing to stash
+		return fn()
+	}
+
+	if err = t.execute("stash"); err == nil {
+		if err = fn(); err == nil {
+			err = t.execute("stash", "pop")
 		}
 	}
 
+	return err
+}
+
+func (t tui[cSet]) executeAll(commands [][]string) (err error) {
 	for _, command := range commands {
 		switch len(command) {
 		case 0:
@@ -32,12 +38,21 @@ func (t tui[xSet]) executeFlow(flowName string, stash bool, commands [][]string)
 		}
 
 		if err != nil {
-			return err
+			break
 		}
 	}
+	return
+}
+
+func (t tui[cSet]) executeFlow(flowName string, stash bool, commands [][]string) error {
+	var err error
+
+	t.printFlowStart(flowName)
 
 	if stash {
-		err = t.execute("stash", "pop")
+		err = t.executeStash(func() error { return t.executeAll(commands) })
+	} else {
+		err = t.executeAll(commands)
 	}
 
 	if err == nil {
@@ -86,9 +101,9 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 		return t.execute("reset", prepend("HEAD~1", args[1:])...)
 	case "branch":
 		if len(args) == 2 {
-			return t.removeBranch(args[1])
+			return t.executeStash(func() error { return t.removeBranch(args[1]) })
 		}
-		return t.removeBranch("")
+		return t.executeStash(func() error { return t.removeBranch("") })
 	case "merge":
 		return t.execute("merge", prepend("abort", args[1:])...)
 	case "stash":
@@ -133,10 +148,13 @@ func (t *tui[cSet]) removeBranch(branch string) error {
 		t.branch = out + " [detached]"
 	}
 
-	// Delete branch
+	// Delete remote branch
 	if isRemoteBranch {
-		err = t.execute("push", "origin", "--delete", branch)
-	} else if err = t.execute("branch", "-rd", "origin/"+branch); err != nil {
+			err = t.execute("push", "origin", "--delete", branch)
+	}
+
+	// Delete local branch
+	if err = t.execute("branch", "-rd", "origin/"+branch); err != nil {
 		t.printOut(err.Error())
 		err = t.execute("branch", "-D", branch)
 	}
