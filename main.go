@@ -14,9 +14,7 @@ func main() {
 	case "terminal", "-terminal", "--terminal":
 		err = term.InteractiveGitp("")
 	default:
-		if err == nil {
-			term.Cursor()
-		}
+		term.Cursor("\n")
 		err = term.Gitp(os.Args[1], os.Args[2:]...)
 	}
 

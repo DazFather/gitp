@@ -94,8 +94,9 @@ func (t theme[cSet]) printHelp(output string) {
 	))
 }
 
-func (t tui[cSet]) Cursor() {
+func (t tui[cSet]) Cursor(suffix string) {
 	t.printCursor(t.branch, t.directory)
+	t.std.Print(suffix)
 }
 
 func (t tui[cSet]) ShowError(err any) {

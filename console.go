@@ -82,7 +82,7 @@ func (t tui[cSet]) InteractiveGitp(escapeSeq string) error {
 		scanner = bufio.NewScanner(os.Stdin)
 	)
 
-	t.Cursor()
+	t.Cursor("")
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == escapeSeq {
@@ -93,7 +93,7 @@ func (t tui[cSet]) InteractiveGitp(escapeSeq string) error {
 		if err := t.Gitp(args[0], args[1:]...); err != nil {
 			return err
 		}
-		t.Cursor()
+		t.Cursor("")
 	}
 
 	return scanner.Err()
@@ -155,3 +155,4 @@ func (e errorWrapper) Error() string {
 func (e errorWrapper) Unwrap() error {
 	return e.wrapped
 }
+
