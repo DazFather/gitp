@@ -150,7 +150,12 @@ func (t *tui[cSet]) removeBranch(branch string) error {
 
 	// Delete remote branch
 	if isRemoteBranch {
+		if isRemoteBranch, err = t.confirmRemoveBranch(branch); isRemoteBranch {
 			err = t.execute("push", "origin", "--delete", branch)
+		}
+		if err != nil {
+			return err
+		}
 	}
 
 	// Delete local branch
