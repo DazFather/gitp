@@ -100,10 +100,19 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 	case "commit":
 		return t.execute("reset", prepend("HEAD~1", args[1:])...)
 	case "branch":
+		branch := t.branch
 		if len(args) == 2 {
-			return t.executeStash(func() error { return t.removeBranch(args[1]) })
+			branch = args[1]
 		}
-		return t.executeStash(func() error { return t.removeBranch("") })
+
+		flowName := "undo branch " + branch
+		t.printFlowStart(flowName)
+
+		err := t.executeStash(func() error { return t.removeBranch(branch) })
+		if err == nil {
+			t.printFlowEnd(flowName)
+		}
+		return err
 	case "merge":
 		return t.execute("merge", prepend("abort", args[1:])...)
 	case "stash":
@@ -115,15 +124,6 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 }
 
 func (t *tui[cSet]) removeBranch(branch string) error {
-	var isCurrent bool
-	if branch == "" {
-		branch = t.branch
-		isCurrent = true
-	}
-
-	flowName := "undo branch " + branch
-	t.printFlowStart(flowName)
-
 	// Check if branch to delete has been pushed on remote
 	t.printCommand(t.branch, "ls-remote", "--exit-code", "--heads", "origin", branch)
 	out, err := git("ls-remote", "--exit-code", "--heads", "origin", branch)
@@ -136,7 +136,7 @@ func (t *tui[cSet]) removeBranch(branch string) error {
 	isRemoteBranch := out != ""
 
 	// If the branch to delete is current checkout to a detached HEAD
-	if isCurrent {
+	if t.branch == branch {
 		t.printCommand(t.branch, "rev-parse", "--short", "HEAD")
 		if out, err = git("rev-parse", "--short", "HEAD"); err != nil {
 			return err
@@ -166,9 +166,7 @@ func (t *tui[cSet]) removeBranch(branch string) error {
 
 	// Cleanup removed branch from list
 	if err == nil {
-		if err = t.execute("fetch", "--prune"); err == nil {
-			t.printFlowEnd(flowName)
-		}
+		err = t.execute("fetch", "--prune")
 	}
 	return err
 }
