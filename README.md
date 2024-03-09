@@ -43,13 +43,13 @@ And before you ask: to exit simply enter an empty input
   - upstream (`--unset-upstream <args...>`): disable remote tracking from a branch
   - branch: it remove given branch or if missing the current one, it deletes also from remote
 
-### Cool looking ✨
+### ✨ Cool looking
 _(And soon customizable)_ Nothing too fancy, is still a terminal application after all, 
 but it uses the [brush](https://github.com/DazFather/brush) library to bring back 
 some colors on your boring terminal to help you guide on the current branch, 
 project or command in use. Try it and see for yourself
 
-### Transparent I/O 🪟
+### 🪟 Transparent I/O
 All commands that are being fed to git with of course the related output will be shown on screen,
  so you know what is happening all the time
 
