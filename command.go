@@ -90,6 +90,8 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 		return t.execute("stash", prepend("pop", args[1:])...)
 	case "upstream":
 		return t.execute("branch", prepend("--unset-upstream", args[1:])...)
+	case "add", "stage":
+		return t.execute("restore", prepend("--staged", args[1:])...)
 	}
 	return errors.New("Unrecognize give argument, usage: undo [commit|branch|merge|stash|upstream]")
 }
