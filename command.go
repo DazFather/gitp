@@ -5,47 +5,6 @@ import (
 	"strings"
 )
 
-func (t tui[xSet]) executeFlow(flowName string, stash bool, commands [][]string) error {
-	var err error
-
-	t.printFlowStart(flowName)
-	if stash {
-		t.printCommand(t.branch, "status", "--p=v1")
-		out, err := git("status", "--p=v1")
-		t.printOut(out)
-		if stash = out != ""; stash {
-			err = t.execute("stash")
-		}
-		if err != nil {
-			return err
-		}
-	}
-
-	for _, command := range commands {
-		switch len(command) {
-		case 0:
-			continue
-		case 1:
-			err = t.execute(command[0])
-		default:
-			err = t.execute(command[0], command[1:]...)
-		}
-
-		if err != nil {
-			return err
-		}
-	}
-
-	if stash {
-		err = t.execute("stash", "pop")
-	}
-
-	if err == nil {
-		t.printFlowEnd(flowName)
-	}
-	return err
-}
-
 func (t *tui[cSet]) help(command string, args ...string) error {
 	out, err := git(command, args...)
 	if err == nil {
@@ -85,10 +44,46 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 	case "commit":
 		return t.execute("reset", prepend("HEAD~1", args[1:])...)
 	case "branch":
-		if len(args) == 2 {
-			return t.removeBranch(args[1])
+		var (
+			branch     string
+			preConfirm bool
+		)
+
+		switch len(args) {
+		case 1:
+			branch = t.branch
+		case 2:
+			if args[1] == "--confirm" {
+				preConfirm = true
+				branch = t.branch
+			} else {
+				branch = args[1]
+			}
+		case 3:
+			ind := 0
+			if args[1] == "--confirm" {
+				ind = 2
+			} else if args[2] == "--confirm" {
+				ind = 1
+			}
+			if ind != 0 {
+				preConfirm = true
+				branch = args[ind]
+				break
+			}
+			fallthrough
+		default:
+			return errors.New("Invald given arguments, usage: undo branch <branch-name> [-confirm]")
 		}
-		return t.removeBranch("")
+
+		flowName := "undo branch " + branch
+		t.printFlowStart(flowName)
+
+		err := t.executeStash(func() error { return t.removeBranch(branch, preConfirm) })
+		if err == nil {
+			t.printFlowEnd(flowName)
+		}
+		return err
 	case "merge":
 		return t.execute("merge", prepend("abort", args[1:])...)
 	case "stash":
@@ -99,16 +94,7 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 	return errors.New("Unrecognize give argument, usage: undo [commit|branch|merge|stash|upstream]")
 }
 
-func (t *tui[cSet]) removeBranch(branch string) error {
-	var isCurrent bool
-	if branch == "" {
-		branch = t.branch
-		isCurrent = true
-	}
-
-	flowName := "undo branch " + branch
-	t.printFlowStart(flowName)
-
+func (t *tui[cSet]) removeBranch(branch string, isConfirmed bool) error {
 	// Check if branch to delete has been pushed on remote
 	t.printCommand(t.branch, "ls-remote", "--exit-code", "--heads", "origin", branch)
 	out, err := git("ls-remote", "--exit-code", "--heads", "origin", branch)
@@ -121,7 +107,7 @@ func (t *tui[cSet]) removeBranch(branch string) error {
 	isRemoteBranch := out != ""
 
 	// If the branch to delete is current checkout to a detached HEAD
-	if isCurrent {
+	if t.branch == branch {
 		t.printCommand(t.branch, "rev-parse", "--short", "HEAD")
 		if out, err = git("rev-parse", "--short", "HEAD"); err != nil {
 			return err
@@ -133,19 +119,30 @@ func (t *tui[cSet]) removeBranch(branch string) error {
 		t.branch = out + " [detached]"
 	}
 
-	// Delete branch
+	// Delete remote branch
 	if isRemoteBranch {
-		err = t.execute("push", "origin", "--delete", branch)
-	} else if err = t.execute("branch", "-rd", "origin/"+branch); err != nil {
+		if !isConfirmed {
+			if isConfirmed, err = t.confirmRemoveBranch(branch); isConfirmed {
+				err = t.execute("push", "origin", "--delete", branch)
+			}
+		} else {
+			err = t.execute("push", "origin", "--delete", branch)
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	// Delete local branch
+	if err = t.execute("branch", "-rd", "origin/"+branch); err != nil {
 		t.printOut(err.Error())
 		err = t.execute("branch", "-D", branch)
 	}
 
 	// Cleanup removed branch from list
 	if err == nil {
-		if err = t.execute("fetch", "--prune"); err == nil {
-			t.printFlowEnd(flowName)
-		}
+		err = t.execute("fetch", "--prune")
 	}
 	return err
 }
