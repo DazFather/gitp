@@ -9,9 +9,9 @@ import (
 )
 
 type theme[cSet brush.ColorType] struct {
-	std                               brush.Brush[cSet]
-	dir, branch, flow, command        brush.Brush[cSet]
-	out, err, errDesc, warn, warnDesc brush.Brush[cSet]
+	std, out                     brush.Brush[cSet]
+	dir, branch, flow, command   brush.Brush[cSet]
+	err, errDesc, warn, warnDesc brush.Brush[cSet]
 }
 
 var defaultTheme = theme[brush.ANSIColor]{
