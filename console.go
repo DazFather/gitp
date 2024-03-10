@@ -99,6 +99,61 @@ func (t tui[cSet]) InteractiveGitp(escapeSeq string) error {
 	return scanner.Err()
 }
 
+func (t tui[cSet]) executeStash(exec func() error) error {
+	t.printCommand(t.branch, "status", "--p=v1")
+	out, err := git("status", "--p=v1")
+	t.printOut(out)
+
+	if err != nil {
+		return err
+	}
+
+	if out == "" { // Nothing to stash
+		err = exec()
+	} else if err = t.execute("stash"); err == nil {
+		if err = exec(); err == nil {
+			err = t.execute("stash", "pop")
+		}
+	}
+
+	return err
+}
+
+func (t tui[cSet]) executeAll(commands [][]string) (err error) {
+	for _, command := range commands {
+		switch len(command) {
+		case 0:
+			continue
+		case 1:
+			err = t.execute(command[0])
+		default:
+			err = t.execute(command[0], command[1:]...)
+		}
+
+		if err != nil {
+			break
+		}
+	}
+	return
+}
+
+func (t tui[cSet]) executeFlow(flowName string, stash bool, commands [][]string) error {
+	var err error
+
+	t.printFlowStart(flowName)
+
+	if stash {
+		err = t.executeStash(func() error { return t.executeAll(commands) })
+	} else {
+		err = t.executeAll(commands)
+	}
+
+	if err == nil {
+		t.printFlowEnd(flowName)
+	}
+	return err
+}
+
 func (t tui[cSet]) execute(command string, args ...string) error {
 	t.printCommand(t.branch, command, args...)
 	out, err := git(command, args...)
