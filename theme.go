@@ -58,7 +58,7 @@ func (t theme[cSet]) printOut(output string) {
 	t.out.Println(output)
 }
 
-func (t theme[cSet]) printWarning(warning string) {
+func (t theme[cSet]) printWarning(warning any) {
 	fmt.Printf("%s%s\n",
 		t.warnDesc.Paint(" ! "),
 		t.warn.Paint(" ", warning, " "),
@@ -111,6 +111,10 @@ func (t tui[cSet]) Cursor(suffix string) {
 
 func (t tui[cSet]) ShowError(err any) {
 	t.printError(err)
+}
+
+func (t tui[cSet]) ShowWarning(err any) {
+	t.printWarning(err)
 }
 
 func (t theme[cSet]) ShowNoArgsError() {
