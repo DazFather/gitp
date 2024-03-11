@@ -60,6 +60,8 @@ func (t *tui[cSet]) Gitp(command string, args ...string) (err error) {
 		err = t.update(command, args...)
 	case "fork":
 		err = t.fork(command, args...)
+	case "align":
+		err = t.align(command, args...)
 	case "init", "clone":
 		if err = t.execute(command, args...); err == nil {
 			if err = t.refreshBranch(); err == nil {

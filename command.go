@@ -35,6 +35,36 @@ func (t *tui[cSet]) fork(command string, args ...string) error {
 	return err
 }
 
+func (t *tui[cSet]) align(command string, args ...string) error {
+	var branchOne, branchTwo string
+
+	switch len(args) {
+	case 1:
+		branchOne, branchTwo = t.branch, args[0]
+	case 2:
+		branchOne, branchTwo = args[0], args[1]
+	default:
+		return errors.New("Invald given arguments")
+	}
+	if branchOne == branchTwo {
+		return errors.New("Invald given arguments")
+	}
+
+	return t.executeFlow(command, true, [][]string{
+		{"fetch"},
+		{"checkout", branchTwo},
+		{"pull"},
+		{"checkout", branchOne},
+		{"pull"},
+		{"merge", branchTwo},
+		{"push"},
+		{"checkout", branchTwo},
+		{"merge", branchOne},
+		{"push"},
+		{"checkout", t.branch},
+	})
+}
+
 func (t *tui[cSet]) undo(command string, args ...string) error {
 	if len(args) == 0 {
 		return errors.New("Invalid given argument, usage: undo [commit|branch|merge|stash|upstream]")
