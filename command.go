@@ -73,7 +73,7 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 		case 1:
 			branch = t.branch
 		case 2:
-			if args[1] == "--confirm" {
+			if IsFlag(args[1], "confirm") {
 				preConfirm = true
 				branch = t.branch
 			} else {
@@ -81,9 +81,9 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 			}
 		case 3:
 			ind := 0
-			if args[1] == "--confirm" {
+			if IsFlag(args[1], "confirm") {
 				ind = 2
-			} else if args[2] == "--confirm" {
+			} else if IsFlag(args[2], "confirm") {
 				ind = 1
 			}
 			if ind != 0 {
@@ -180,8 +180,4 @@ func (t *tui[cSet]) removeBranch(branch string, isConfirmed bool) error {
 		err = t.execute("fetch", "--prune")
 	}
 	return err
-}
-
-func prepend[T any](item T, slice []T) []T {
-	return append([]T{item}, slice...)
 }

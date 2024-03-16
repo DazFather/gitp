@@ -16,10 +16,9 @@ func main() {
 		term.ShowWarning(err)
 	}
 
-	switch os.Args[1] {
-	case "terminal", "-terminal", "--terminal":
-		err = term.InteractiveGitp("")
-	default:
+	if IsFlag(os.Args[1], "terminal") {
+		err = term.InteractiveGitp("", len(os.Args) > 2 && IsFlag(os.Args[2], "keep-alive"))
+	} else {
 		term.Cursor(strings.Join(os.Args[1:], " ") + "\n")
 		err = term.Gitp(os.Args[1], os.Args[2:]...)
 	}

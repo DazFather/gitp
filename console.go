@@ -78,7 +78,7 @@ func (t *tui[cSet]) Gitp(command string, args ...string) (err error) {
 	return
 }
 
-func (t tui[cSet]) InteractiveGitp(escapeSeq string) error {
+func (t tui[cSet]) InteractiveGitp(escapeSeq string, keepAlive bool) error {
 	var (
 		rgx     = regexp.MustCompile(`".+"|[^\s]+`)
 		scanner = bufio.NewScanner(os.Stdin)
@@ -93,7 +93,10 @@ func (t tui[cSet]) InteractiveGitp(escapeSeq string) error {
 
 		args := rgx.FindAllString(line, -1)
 		if err := t.Gitp(args[0], args[1:]...); err != nil {
-			return err
+			if !keepAlive {
+				return err
+			}
+			t.ShowError(err)
 		}
 		t.Cursor("")
 	}
@@ -194,21 +197,4 @@ func git(command string, args ...string) (stdout string, err error) {
 		}
 	}
 	return
-}
-
-type errorWrapper struct {
-	wrapped error
-	message string
-}
-
-func wrapError(out string, err error) error {
-	return errorWrapper{err, out}
-}
-
-func (e errorWrapper) Error() string {
-	return e.message
-}
-
-func (e errorWrapper) Unwrap() error {
-	return e.wrapped
 }
