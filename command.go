@@ -36,7 +36,7 @@ func (t *tui[cSet]) fork(command string, args ...string) error {
 }
 
 func (t *tui[cSet]) align(command string, args ...string) error {
-	if len(args) != 1 ||  {
+	if len(args) != 1 {
 		return errors.New("Invald given arguments, usage: align <reference-branch>")
 	}
 

@@ -97,7 +97,7 @@ func (t theme[cSet]) printHelp(output string) {
 		"\t upstream (branch --unset-upstream <args...>): disable remote tracking from a branch\n",
 		"\t add, stage: (restore --staged <args...>): remove matching files from stage\n",
 		"\t branch: remove given branch, if missing the current one, it deletes also remote after a confirm, pass '--confirm' to skip\n",
-		" • ", t.command.Paint("align <branch-one> <branch-two>"), ": update the branches and merge <branch-one> in <branch-two> and vice versa pushing changes on remote. If <branch-one> is not given then current one will be used instead\n",
+		" • ", t.command.Paint("align <reference-branch>"), ": update current and reference branch and and merge reference into current\n",
 		t.dir.Paint(" Terminal "), " An interactive git command line that will constantly ask for new gitp+ flows or git commands.\n",
 		"To use it simply launch this program using 'terminal', '--terminal' or '-terminal' as the only argument.\n",
 		"To escape just insert a blank line\n\n",
