@@ -58,7 +58,7 @@ func (t theme[cSet]) printOut(output string) {
 	t.out.Println(output)
 }
 
-func (t theme[cSet]) printWarning(warning string) {
+func (t theme[cSet]) printWarning(warning any) {
 	fmt.Printf("%s%s\n",
 		t.warnDesc.Paint(" ! "),
 		t.warn.Paint(" ", warning, " "),
@@ -97,6 +97,7 @@ func (t theme[cSet]) printHelp(output string) {
 		"\t upstream (branch --unset-upstream <args...>): disable remote tracking from a branch\n",
 		"\t add, stage: (restore --staged <args...>): remove matching files from stage\n",
 		"\t branch: remove given branch, if missing the current one, it deletes also remote after a confirm, pass '--confirm' to skip\n",
+		"\t fork (undo branch <branch-name> --confirm): a simple alias pre-confirmed to integrate better with fork flow",
 		" • ", t.command.Paint("align <reference-branch>"), ": update current and reference branch and and merge reference into current\n",
 		t.dir.Paint(" Terminal "), " An interactive git command line that will constantly ask for new gitp+ flows or git commands.\n",
 		"To use it simply launch this program using 'terminal', '--terminal' or '-terminal' as the only argument.\n",
@@ -112,6 +113,10 @@ func (t tui[cSet]) Cursor(suffix string) {
 
 func (t tui[cSet]) ShowError(err any) {
 	t.printError(err)
+}
+
+func (t tui[cSet]) ShowWarning(err any) {
+	t.printWarning(err)
 }
 
 func (t theme[cSet]) ShowNoArgsError() {

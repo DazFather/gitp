@@ -57,7 +57,7 @@ func (t *tui[cSet]) align(command string, args ...string) error {
 
 func (t *tui[cSet]) undo(command string, args ...string) error {
 	if len(args) == 0 {
-		return errors.New("Invalid given argument, usage: undo [commit|branch|merge|stash|upstream]")
+		return errors.New("Invalid given argument, usage: undo [commit|branch|merge|stash|upstream|add|stage] <args...>")
 	}
 
 	switch args[0] {
@@ -93,7 +93,7 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 			}
 			fallthrough
 		default:
-			return errors.New("Invald given arguments, usage: undo branch <branch-name> [-confirm]")
+			return errors.New("Invald given arguments, usage: undo branch <branch-name> [--confirm]")
 		}
 
 		flowName := "undo branch " + branch
@@ -104,6 +104,18 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 			t.printFlowEnd(flowName)
 		}
 		return err
+	case "fork":
+		var branch string
+		switch len(args) {
+		case 1:
+			branch = t.branch
+		case 2:
+			branch = args[1]
+		default:
+			return errors.New("Tnvalid given arguments, usage: undo fork <branch-name>")
+		}
+
+		return t.removeBranch(branch, true)
 	case "merge":
 		return t.execute("merge", prepend("abort", args[1:])...)
 	case "stash":
@@ -113,7 +125,8 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 	case "add", "stage":
 		return t.execute("restore", prepend("--staged", args[1:])...)
 	}
-	return errors.New("Unrecognize give argument, usage: undo [commit|branch|merge|stash|upstream]")
+
+	return errors.New("Unrecognize give argument, usage: undo [commit|branch|fork|merge|stash|upstream|add|stage] <args...>")
 }
 
 func (t *tui[cSet]) removeBranch(branch string, isConfirmed bool) error {

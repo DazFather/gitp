@@ -12,6 +12,9 @@ func main() {
 	}
 
 	var term, err = DefaultTui()
+	if err != nil {
+		term.ShowWarning(err)
+	}
 
 	switch os.Args[1] {
 	case "terminal", "-terminal", "--terminal":
