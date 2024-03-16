@@ -90,15 +90,15 @@ func (t theme[cSet]) printHelp(output string) {
 		"update your branch with possible incoming remote changes\n",
 		" • ", t.command.Paint("fork <branch-name>"), " (status > stash* > fetch > pull > checkout -b <branch> > push --set-upstream origin <branch> > stash pop*):",
 		"update current branch and creates a new one from current with given name and sets remote upstream\n",
-		" • ", t.command.Paint("undo [commit|branch|merge|stash|upstream|add|stage] <args...>"), ": has different effects depending on input\n",
+		" • ", t.command.Paint("undo [commit|branch|fork|merge|stash|upstream|add|stage] <args...>"), ": has different effects depending on input\n",
 		"\t commit (reset HEAD~1 <args...>): reset last commit preserving changes locally by default\n",
 		"\t merge (merge abort <args...>): abort current merge\n",
 		"\t stash (stash pop <args...>): reapply last stashed item and remove it from the stack\n",
 		"\t upstream (branch --unset-upstream <args...>): disable remote tracking from a branch\n",
 		"\t add, stage: (restore --staged <args...>): remove matching files from stage\n",
 		"\t branch: remove given branch, if missing the current one, it deletes also remote after a confirm, pass '--confirm' to skip\n",
-		"\t fork (undo branch <branch-name> --confirm): a simple alias pre-confirmed to integrate better with fork flow",
-		" • ", t.command.Paint("align <reference-branch>"), ": update current and reference branch and and merge reference into current\n",
+		"\t fork (undo branch <branch-name> --confirm): a simple alias pre-confirmed to integrate better with fork flow\n",
+		" • ", t.command.Paint("align <reference-branch>"), ": update current and reference branches and merge reference into current\n",
 		t.dir.Paint(" Terminal "), " An interactive git command line that will constantly ask for new gitp+ flows or git commands.\n",
 		"To use it simply launch this program using 'terminal', '--terminal' or '-terminal' as the only argument.\n",
 		"To escape just insert a blank line\n\n",
@@ -127,7 +127,7 @@ func (t theme[cSet]) ShowNoArgsError() {
 func (t theme[cSet]) confirmRemoveBranch(branch string) (bool, error) {
 	var choice string
 
-	t.printWarning("This action is not reversable")
+	t.printWarning("This action is not reversible")
 	fmt.Print(t.std.Embed(
 		"\nConfirm: delete branch ", t.branch.Paint(" ", branch, " "), " also from remote?\n",
 		"\t[", brush.Paint(brush.White, brush.UseColor(brush.Green), " Yes "), "]",

@@ -25,7 +25,8 @@ And before you ask: to exit simply enter an empty input
   > git pull
   > git stash pop # If there were changes
   > ```
-- ⤴️ **`fork <branch-name>`**: forks your current branch and creates a new one with given name and sets remote upstream
+ 
+- ⤴️ **`fork <branch-name>`**: Forks your current branch and creates a new one with given name and sets remote upstream
   > Equivalent of:
   > ```shell
   > git status
@@ -36,12 +37,29 @@ And before you ask: to exit simply enter an empty input
   > git push --set-upstream origin <branch>
   > git stash pop # If there were changes
   > ```
-- 🛟 **`undo [commit|branch|merge|stash|upstream] <args...>`**: The undo-button you wish you had earlier, has different effects depending on the input
+ 
+- 🛟 **`undo [commit|branch|fork|merge|stash|upstream|add|stage] <args...>`**: The undo-button you wish you had earlier, has different effects depending on the input
   - commit (`reset HEAD~1 <args...>`): reset last commit preserving changes locally by default
   - merge (`merge abort <args...>`): abort current merge
   - stash (`stash pop <args...>`): reapply last stashed item and remove it from the stack
   - upstream (`--unset-upstream <args...>`): disable remote tracking from a branch
-  - branch: it remove given branch or if missing the current one, it deletes also from remote
+  - branch: remove given branch or, if missing, the current one, It deletes also the remote one after a confirm by the user, you can pass `--confirm` to skip this step
+  - fork (`undo branch <branch-name> --confirm`): a simple alias pre-confirmed to integrate better with fork flow,
+
+- 📏 **`align <reference-branch>`**: Update current and reference branches and then merge reference into current
+  > Equivalent of:
+  > ```shell
+  > git status
+  > git stash     # If there are changes
+  > git fetch
+  > git checkout <reference-branch>
+  > git pull
+  > git checkout <current-branch>
+  > git pull
+  > git merge <reference-branch>
+  > git stash pop # If there were changes
+  > ```
+		
 
 ### ✨ Cool looking
 _(And soon customizable)_ Nothing too fancy, is still a terminal application after all, 
