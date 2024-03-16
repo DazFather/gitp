@@ -100,7 +100,8 @@ func (t theme[cSet]) printHelp(output string) {
 		"\t fork (undo branch <branch-name> --confirm): a simple alias pre-confirmed to integrate better with fork flow\n",
 		" • ", t.command.Paint("align <reference-branch>"), ": update current and reference branches and merge reference into current\n",
 		t.dir.Paint(" Terminal "), " An interactive git command line that will constantly ask for new gitp+ flows or git commands.\n",
-		"To use it simply launch this program using 'terminal', '--terminal' or '-terminal' as the only argument.\n",
+		"To use it simply launch this program using 'terminal', '--terminal' or '-terminal' as first argument.\n",
+		"By default if a command result into an error the interactive terminal will stop, if you want to override this behaviour you can use --keep-alive.\n",
 		"To escape just insert a blank line\n\n",
 		t.dir.Paint(" Git Help "), t.out.Paint(" ", output, "\n"),
 	))
