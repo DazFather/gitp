@@ -126,7 +126,7 @@ func (t theme[cSet]) ShowNoArgsError() {
 func (t theme[cSet]) confirmRemoveBranch(branch string) (bool, error) {
 	var choice string
 
-	t.printWarning("This action is not reversable")
+	t.printWarning("This action is not reversible")
 	fmt.Print(t.std.Embed(
 		"\nConfirm: delete branch ", t.branch.Paint(" ", branch, " "), " also from remote?\n",
 		"\t[", brush.Paint(brush.White, brush.UseColor(brush.Green), " Yes "), "]",
