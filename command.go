@@ -36,32 +36,22 @@ func (t *tui[cSet]) fork(command string, args ...string) error {
 }
 
 func (t *tui[cSet]) align(command string, args ...string) error {
-	var branchOne, branchTwo string
-
-	switch len(args) {
-	case 1:
-		branchOne, branchTwo = t.branch, args[0]
-	case 2:
-		branchOne, branchTwo = args[0], args[1]
-	default:
-		return errors.New("Invald given arguments")
+	if len(args) != 1 ||  {
+		return errors.New("Invald given arguments, usage: align <reference-branch>")
 	}
-	if branchOne == branchTwo {
-		return errors.New("Invald given arguments")
+
+	reference := args[0]
+	if reference == t.branch {
+		return errors.New("Invalid given arguments, reference branch cannot be the same as current")
 	}
 
 	return t.executeFlow(command, true, [][]string{
 		{"fetch"},
-		{"checkout", branchTwo},
+		{"checkout", reference},
 		{"pull"},
-		{"checkout", branchOne},
-		{"pull"},
-		{"merge", branchTwo},
-		{"push"},
-		{"checkout", branchTwo},
-		{"merge", branchOne},
-		{"push"},
 		{"checkout", t.branch},
+		{"pull"},
+		{"merge", reference},
 	})
 }
 
