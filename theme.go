@@ -97,6 +97,7 @@ func (t theme[cSet]) printHelp(output string) {
 		"\t upstream (branch --unset-upstream <args...>): disable remote tracking from a branch\n",
 		"\t add, stage: (restore --staged <args...>): remove matching files from stage\n",
 		"\t branch: remove given branch, if missing the current one, it deletes also remote after a confirm, pass '--confirm' to skip\n",
+		"\t fork (undo branch <branch-name> --confirm): a simple alias pre-confirmed to integrate better with fork flow",
 		t.dir.Paint(" Terminal "), " An interactive git command line that will constantly ask for new gitp+ flows or git commands.\n",
 		"To use it simply launch this program using 'terminal', '--terminal' or '-terminal' as the only argument.\n",
 		"To escape just insert a blank line\n\n",
