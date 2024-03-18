@@ -8,13 +8,27 @@ import (
 	"github.com/DazFather/brush"
 )
 
-type theme[cSet brush.ColorType] struct {
+type theme interface {
+	printCursor(branch, location, suffix string)
+	printFlowStart(command string)
+	printFlowEnd(command string)
+	printCommand(branch, command string, args ...string)
+	printOut(output string)
+	printWarning(warning any)
+	printError(err any)
+	printHelp(gitHelp string)
+
+	confirmRemoveBranch(branch string) (bool, error)
+	ShowNoArgsError()
+}
+
+type palette[cSet brush.ColorType] struct {
 	std, out                     brush.Brush[cSet]
 	dir, branch, flow, command   brush.Brush[cSet]
 	err, errDesc, warn, warnDesc brush.Brush[cSet]
 }
 
-var defaultTheme = theme[brush.ANSIColor]{
+var defaultTheme theme = palette[brush.ANSIColor]{
 	std:      brush.New(brush.White, nil),
 	dir:      brush.New(brush.White, brush.UseColor(brush.Blue)),
 	branch:   brush.New(brush.White, brush.UseColor(brush.BrightBlue)),
@@ -27,70 +41,71 @@ var defaultTheme = theme[brush.ANSIColor]{
 	warnDesc: brush.New(brush.Black, brush.UseColor(brush.BrightYellow)),
 }
 
-func (t theme[cSet]) printCommand(branch, command string, args ...string) {
+func (p palette[cSet]) printCommand(branch, command string, args ...string) {
 	if len(args) > 0 {
 		command += " " + strings.Join(args, " ")
 	}
 
-	fmt.Print(t.std.Embed(
+	p.printMessage(
 		"• ",
-		t.command.Paint("git ", command),
+		p.command.Paint("git ", command),
 		": ",
-	))
+	)
 }
 
-func (t theme[cSet]) printCursor(branch, location string) {
-	fmt.Print(t.std.Embed(
-		t.dir.Paint(" ", location, " "),
-		t.branch.Paint(" ", branch, " "),
+func (p palette[cSet]) printCursor(branch, location, suffix string) {
+	p.printMessage(
+		p.dir.Paint(" ", location, " "),
+		p.branch.Paint(" ", branch, " "),
 		" ► ",
-	))
-}
-
-func (t theme[cSet]) printError(err any) {
-	fmt.Printf("%s%s\n",
-		t.errDesc.Paint(" ERROR "),
-		t.err.Paint(" - ", err, " "),
+		suffix,
 	)
 }
 
-func (t theme[cSet]) printOut(output string) {
-	t.out.Println(output)
-}
-
-func (t theme[cSet]) printWarning(warning any) {
+func (p palette[cSet]) printError(err any) {
 	fmt.Printf("%s%s\n",
-		t.warnDesc.Paint(" ! "),
-		t.warn.Paint(" ", warning, " "),
+		p.errDesc.Paint(" ERROR "),
+		p.err.Paint(" - ", err, " "),
 	)
 }
 
-func (t theme[cSet]) printFlowStart(command string) {
-	fmt.Print(t.std.Embed(
-		t.flow.Paint(" » "),
+func (p palette[cSet]) printOut(output string) {
+	p.out.Println(output)
+}
+
+func (p palette[cSet]) printWarning(warning any) {
+	fmt.Printf("%s%s\n",
+		p.warnDesc.Paint(" ! "),
+		p.warn.Paint(" ", warning, " "),
+	)
+}
+
+func (p palette[cSet]) printFlowStart(command string) {
+	p.printMessage(
+		p.flow.Paint(" » "),
 		"executing ",
-		t.command.Paint("git+ ", command),
+		p.command.Paint("git+ ", command),
 		" command flow \n",
-	))
+	)
 }
 
-func (t theme[cSet]) printFlowEnd(command string) {
-	fmt.Print(t.std.Embed(
-		t.flow.Paint(" ✓ "),
-		t.command.Paint("git+ ", command),
+func (p palette[cSet]) printFlowEnd(command string) {
+	p.printMessage(
+		p.flow.Paint(" ✓ "),
+		p.command.Paint("git+ ", command),
 		" executed successfully \n",
-	))
+	)
 }
 
-func (t theme[cSet]) printHelp(output string) {
-	fmt.Println(t.std.Embed(
+func (p palette[cSet]) printHelp(output string) {
+	p.printMessage(
 		"gitp aka git+ is a cli that facilitate you when using git commands\n\n",
-		t.dir.Paint(" Flows "), " are a list of commands that gets executed one after the other, for common tasks:\n",
-		" • ", t.command.Paint("update"), " (status > stash* > fetch > pull > stash pop*): ",
+		p.dir.Paint(" Flows "), " are a list of commands that gets executed one after the other, for common tasks:\n",
+		" • ", p.command.Paint("update"), " (status > stash* > fetch > pull > stash pop*): ",
 		"update your branch with possible incoming remote changes\n",
-		" • ", t.command.Paint("fork <branch-name>"), " (status > stash* > fetch > pull > checkout -b <branch> > push --set-upstream origin <branch> > stash pop*):",
+		" • ", p.command.Paint("fork <branch-name>"), " (status > stash* > fetch > pull > checkout -b <branch> > push --set-upstream origin <branch> > stash pop*):",
 		"update current branch and creates a new one from current with given name and sets remote upstream\n",
-		" • ", t.command.Paint("undo [commit|branch|fork|merge|stash|upstream|add|stage] <args...>"), ": has different effects depending on input\n",
+		" • ", p.command.Paint("undo [commit|branch|fork|merge|stash|upstream|add|stage] <args...>"), ": has different effects depending on input\n",
 		"\t commit (reset HEAD~1 <args...>): reset last commit preserving changes locally by default\n",
 		"\t merge (merge abort <args...>): abort current merge\n",
 		"\t stash (stash pop <args...>): reapply last stashed item and remove it from the stack\n",
@@ -98,43 +113,28 @@ func (t theme[cSet]) printHelp(output string) {
 		"\t add, stage: (restore --staged <args...>): remove matching files from stage\n",
 		"\t branch: remove given branch, if missing the current one, it deletes also remote after a confirm, pass '--confirm' to skip\n",
 		"\t fork (undo branch <branch-name> --confirm): a simple alias pre-confirmed to integrate better with fork flow\n",
-		" • ", t.command.Paint("align <reference-branch>"), ": update current and reference branches and merge reference into current\n",
-		t.dir.Paint(" Terminal "), " An interactive git command line that will constantly ask for new gitp+ flows or git commands.\n",
+		" • ", p.command.Paint("align <reference-branch>"), ": update current and reference branches and merge reference into current\n",
+		p.dir.Paint(" Terminal "), " An interactive git command line that will constantly ask for new gitp+ flows or git commands.\n",
 		"To use it simply launch this program using 'terminal', '--terminal' or '-terminal' as first argument.\n",
 		"By default if a command result into an error the interactive terminal will stop, if you want to override this behaviour you can use --keep-alive.\n",
 		"To escape just insert a blank line\n\n",
-		t.dir.Paint(" Git Help "), t.out.Paint(" ", output, "\n"),
-	))
+		p.dir.Paint(" Git Help "), p.out.Paint(" ", output, "\n"),
+	)
 }
 
-func (t tui[cSet]) Cursor(suffix string) {
-	t.printCursor(t.branch, t.directory)
-	t.std.Print(suffix)
+func (p palette[cSet]) printMessage(values ...any) {
+	fmt.Print(p.std.Embed(values...))
 }
 
-func (t tui[cSet]) ShowError(err any) {
-	t.printError(err)
-}
-
-func (t tui[cSet]) ShowWarning(err any) {
-	t.printWarning(err)
-}
-
-func (t theme[cSet]) ShowNoArgsError() {
-	t.printError("No given arguments")
-	t.std.Println("Use 'gitp help' to learn more")
-}
-
-func (t theme[cSet]) confirmRemoveBranch(branch string) (bool, error) {
+func (p palette[cSet]) confirmRemoveBranch(branch string) (bool, error) {
 	var choice string
 
-	t.printWarning("This action is not reversible")
-	fmt.Print(t.std.Embed(
-		"\nConfirm: delete branch ", t.branch.Paint(" ", branch, " "), " also from remote?\n",
+	p.printWarning("This action is not reversible")
+	p.printMessage("\nConfirm: delete branch ", p.branch.Paint(" ", branch, " "), " also from remote?\n",
 		"\t[", brush.Paint(brush.White, brush.UseColor(brush.Green), " Yes "), "]",
 		" | ", brush.Paint(brush.White, brush.UseColor(brush.Red), " No "),
 		" ► ",
-	))
+	)
 
 	if _, err := fmt.Scanln(&choice); err != nil {
 		return false, err
@@ -149,4 +149,20 @@ func (t theme[cSet]) confirmRemoveBranch(branch string) (bool, error) {
 	}
 
 	return false, errors.New("Invalid input '" + choice + "'")
+}
+
+func (p palette[cSet]) ShowNoArgsError() {
+	p.printError("No given arguments, use 'gitp help' to learn more'")
+}
+
+func (t tui) Cursor(suffix string) {
+	t.printCursor(t.branch, t.directory, suffix)
+}
+
+func (t tui) ShowError(err any) {
+	t.printError(err)
+}
+
+func (t tui) ShowWarning(err any) {
+	t.printWarning(err)
 }

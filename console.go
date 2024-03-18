@@ -8,20 +8,19 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/DazFather/brush"
 )
 
-type tui[cSet brush.ColorType] struct {
+type tui struct {
 	branch, directory string
-	theme[cSet]
+	theme
 }
 
-func NewTui[cSet brush.ColorType](t theme[cSet]) (term *tui[cSet], err error) {
-	term = &tui[cSet]{theme: t}
+func NewTui(t theme) (term *tui, err error) {
+	term = &tui{theme: t}
 
 	if err = term.refreshBranch(); err != nil {
 		term.branch = "[no git repo]"
+		t.printWarning("Cannot find git repositoy for this project, use 'init' or 'clone' to create a new one")
 		if term.directory, err = os.Getwd(); err != nil {
 			return nil, err
 		}
@@ -36,7 +35,7 @@ func NewTui[cSet brush.ColorType](t theme[cSet]) (term *tui[cSet], err error) {
 	return
 }
 
-func DefaultTui() (tui[brush.ANSIColor], error) {
+func DefaultTui() (tui, error) {
 	term, err := NewTui(defaultTheme)
 	if term == nil {
 		panic(fmt.Sprint("Cannot create gitp+ terminal: ", err))
@@ -45,13 +44,13 @@ func DefaultTui() (tui[brush.ANSIColor], error) {
 	return *term, err
 }
 
-func (t *tui[cSet]) Gitp(command string, args ...string) (err error) {
+func (t *tui) Gitp(command string, args ...string) (err error) {
 	switch command {
 	case "git", "gitp", "git+":
 		if len(args) > 0 {
 			return t.Gitp(args[0], args[1:]...)
 		}
-		t.ShowNoArgsError()
+		t.printError("No given arguments, use 'gitp help' to learn more'")
 	case "help", "-h", "--help":
 		err = t.help(command, args...)
 	case "undo":
@@ -78,7 +77,7 @@ func (t *tui[cSet]) Gitp(command string, args ...string) (err error) {
 	return
 }
 
-func (t tui[cSet]) InteractiveGitp(escapeSeq string, keepAlive bool) error {
+func (t tui) InteractiveGitp(escapeSeq string, keepAlive bool) error {
 	var (
 		rgx     = regexp.MustCompile(`".+"|[^\s]+`)
 		scanner = bufio.NewScanner(os.Stdin)
@@ -104,7 +103,7 @@ func (t tui[cSet]) InteractiveGitp(escapeSeq string, keepAlive bool) error {
 	return scanner.Err()
 }
 
-func (t tui[cSet]) executeStash(exec func() error) error {
+func (t tui) executeStash(exec func() error) error {
 	t.printCommand(t.branch, "status", "--p=v1")
 	out, err := git("status", "--p=v1")
 	t.printOut(out)
@@ -124,7 +123,7 @@ func (t tui[cSet]) executeStash(exec func() error) error {
 	return err
 }
 
-func (t tui[cSet]) executeAll(commands [][]string) (err error) {
+func (t tui) executeAll(commands [][]string) (err error) {
 	for _, command := range commands {
 		switch len(command) {
 		case 0:
@@ -142,7 +141,7 @@ func (t tui[cSet]) executeAll(commands [][]string) (err error) {
 	return
 }
 
-func (t tui[cSet]) executeFlow(flowName string, stash bool, commands [][]string) error {
+func (t tui) executeFlow(flowName string, stash bool, commands [][]string) error {
 	var err error
 
 	t.printFlowStart(flowName)
@@ -159,7 +158,7 @@ func (t tui[cSet]) executeFlow(flowName string, stash bool, commands [][]string)
 	return err
 }
 
-func (t tui[cSet]) execute(command string, args ...string) error {
+func (t tui) execute(command string, args ...string) error {
 	t.printCommand(t.branch, command, args...)
 	out, err := git(command, args...)
 	if err == nil {
@@ -169,7 +168,7 @@ func (t tui[cSet]) execute(command string, args ...string) error {
 	return err
 }
 
-func (t *tui[cSet]) refreshBranch() (err error) {
+func (t *tui) refreshBranch() (err error) {
 	if t.branch, err = git("branch", "--show-current"); err != nil {
 		return
 	}

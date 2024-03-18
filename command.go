@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func (t *tui[cSet]) help(command string, args ...string) error {
+func (t *tui) help(command string, args ...string) error {
 	out, err := git(command, args...)
 	if err == nil {
 		t.printHelp(out)
@@ -13,11 +13,11 @@ func (t *tui[cSet]) help(command string, args ...string) error {
 	return err
 }
 
-func (t *tui[cSet]) update(command string, args ...string) error {
+func (t *tui) update(command string, args ...string) error {
 	return t.executeFlow(command, true, [][]string{{"fetch"}, {"pull"}})
 }
 
-func (t *tui[cSet]) fork(command string, args ...string) error {
+func (t *tui) fork(command string, args ...string) error {
 	if len(args) != 1 {
 		return errors.New("Invalid given argument, usage: fork <new-branch-name>")
 	}
@@ -35,7 +35,7 @@ func (t *tui[cSet]) fork(command string, args ...string) error {
 	return err
 }
 
-func (t *tui[cSet]) align(command string, args ...string) error {
+func (t *tui) align(command string, args ...string) error {
 	if len(args) != 1 {
 		return errors.New("Invald given arguments, usage: align <reference-branch>")
 	}
@@ -55,7 +55,7 @@ func (t *tui[cSet]) align(command string, args ...string) error {
 	})
 }
 
-func (t *tui[cSet]) undo(command string, args ...string) error {
+func (t *tui) undo(command string, args ...string) error {
 	if len(args) == 0 {
 		return errors.New("Invalid given argument, usage: undo [commit|branch|merge|stash|upstream|add|stage] <args...>")
 	}
@@ -129,7 +129,7 @@ func (t *tui[cSet]) undo(command string, args ...string) error {
 	return errors.New("Unrecognize give argument, usage: undo [commit|branch|fork|merge|stash|upstream|add|stage] <args...>")
 }
 
-func (t *tui[cSet]) removeBranch(branch string, isConfirmed bool) error {
+func (t *tui) removeBranch(branch string, isConfirmed bool) error {
 	// Check if branch to delete has been pushed on remote
 	t.printCommand(t.branch, "ls-remote", "--exit-code", "--heads", "origin", branch)
 	out, err := git("ls-remote", "--exit-code", "--heads", "origin", branch)
